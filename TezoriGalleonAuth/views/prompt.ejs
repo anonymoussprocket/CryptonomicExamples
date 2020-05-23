@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Galleon Authentication Example</title>
+    <script>
+        const startPeeking = () => {
+            setTimeout(() => { peek(); }, 10 * 1000);
+        };
+
+        const peek = () => {
+            window.fetch('/peek')
+                .then(response => {
+                    if (response.redirected) {
+                        window.location = response.url;
+                    } else {
+                        document.getElementById('peekProgress').innerHTML += '.';
+                        setTimeout(() => { peek(); }, 10 * 1000);
+                    }
+                });
+        }
+    </script>
+</head>
+<body>
+        <h1>Step 2</h1>
+
+        <p>Please sign the following words using the Galleon wallet with <%= sessionAddress %> key.</p>
+
+        <p><%= sessionWords %></p>
+
+        <button type="submit" onClick="window.open('tezori://auth?r=<%= sessionPrompt %>'); startPeeking();">Request</button>
+
+        <div id="peekProgress">
+
+        </div>
+</body>
+
+</html>
