@@ -1,0 +1,22 @@
+{
+    "name": "conseiljs-express-sample",
+    "version": "0.0.1",
+    "description": "ConseilJS Express Sample",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "author": "anonymoussprocket",
+    "license": "UNLICENSED",
+    "engines": {
+        "node": ">=12.16.x",
+        "npm": ">=6.13.x"
+    },
+    "homepage": "https://gist.github.com/anonymoussprocket",
+    "dependencies": {
+        "body-parser": "1.19.0",
+        "conseiljs": "5.0.0-alpha.1",
+        "express": "4.17.1",
+        "loglevel": "1.6.8",
+        "node-fetch": "2.6.0"
+    }
+}
