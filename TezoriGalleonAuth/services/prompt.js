@@ -30,7 +30,7 @@ router.get('/prompt', (req, res) => {
 
     const prompt = {
         requestor: "Most Awesome dApp",
-        desc: "The best and only dApp on Tezos",
+        desc: "Tezos dApp be dAppey",
         requrl: "http://localhost:8080/",
         prompt: req.session.words,
         callback: `http://localhost:8080/validate?sid=${req.session.id}`,

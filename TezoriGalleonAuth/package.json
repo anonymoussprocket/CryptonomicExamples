@@ -12,7 +12,7 @@
     "base64url": "3.0.1",
     "bip39": "3.0.2",
     "conseiljs": "5.0.0-alpha.1",
-    "conseiljs-softsigner": "../../ConseilJS/500/ConseilJS-softsigner",
+    "conseiljs-softsigner": "../../../ConseilJS/500/ConseilJS-softsigner",
     "cookie-parser": "1.4.5",
     "express": "4.17.1",
     "express-session": "1.17.1",

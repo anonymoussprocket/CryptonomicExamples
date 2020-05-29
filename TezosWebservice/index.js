@@ -59,7 +59,7 @@ async function init() {
 async function pokeTezosNode(url) {
     const p = new Promise((resolve, reject) => {
         fetch(url).then(resolve, reject);
-        setTimeout(reject, 2_000, new Error("No response in 2s"));
+        setTimeout(reject, 2_000, new Error('No response in 2 seconds'));
     });
 
     let r = false;
