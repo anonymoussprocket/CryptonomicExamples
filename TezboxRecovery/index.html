@@ -1,0 +1,23 @@
+<html>
+    <head>
+        <script src="https://cdn.jsdelivr.net/gh/cryptonomic/conseiljs-softsigner/dist-web/conseiljs-softsigner.min.js"
+            integrity="sha384-aQb9FFn6CZkolxC8jtsj1vhKOQtU8QWXJKN+h1PDNjdd0ml6C4r772YuB0gfNwD4"
+            crossorigin="anonymous"></script>
+        <script>
+            async function generate() {
+                const mnemonic = document.forms[0].elements.mnemonic.value;
+                const keyStore = await conseiljssoftsigner.KeyStoreUtils.restoreIdentityFromMnemonic(mnemonic.split(' ').join(''), '', undefined, undefined, false);
+                document.getElementById('pkh').innerHTML = keyStore.publicKeyHash;
+                document.getElementById('sk').innerHTML = keyStore.secretKey;
+            }
+        </script>
+    </head>
+    <body>
+        <form>
+            <input type="text" name="mnemonic" value="boss wheat grain chuckle essence sketch stem high oak artefact vessel husband bitter false adult">
+            <button onClick="generate(); return false;">Generate</button>
+        </form>
+        <div id="pkh"></div>
+        <div id="sk"></div>
+    </body>
+</html>
