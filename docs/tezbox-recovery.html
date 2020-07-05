@@ -16,7 +16,7 @@
         <h1>Tezos address generator</h1>
         <h2>Use at your own risk</h2>
         <p>
-            This code runs locally. View source to find the ConseilJS call involved in generating the keys. This was written as an attempt to help those unable to recover their secret keys from Tezbox. This page <em>may help</em>, it also might not. Please compare the generated tz1 address to the one you're seeing in Tezbox.
+            This code runs locally. View source to find the ConseilJS call involved in generating the keys. This was written as an attempt to help those unable to recover their secret keys from Tezbox. This page <em>may help</em>, it also might not. Please compare the generated tz1 address to the one you're seeing in Tezbox. If the addresses match you can import the account into the <a href="https://github.com/Cryptonomic/Deployments/wiki/Galleon:-Releases">Galleon Wallet</a> after creating a new file wallet and adding the account using the secret key. Please follow the instructions in <a href="https://www.youtube.com/watch?v=fLnOcezCZU0&t=16">this video</a> If the addresses do not match, this process will not work for you.
         </p>
         <pre>
             const keyStore = await conseiljssoftsigner.KeyStoreUtils.restoreIdentityFromMnemonic(mnemonic.split(' ').join(''), '', undefined, undefined, false);
