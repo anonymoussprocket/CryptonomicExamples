@@ -16,9 +16,12 @@
         <h1>Tezos address generator</h1>
         <h2>Use at your own risk!</h2>
         <h3>Never share your mnemonic or secret key!</h3>
-        <p>
-            This code runs locally in your browser, the mnemonic and secret key are never sent to any server. View source to find the ConseilJS call involved in generating the keys. This was written as an attempt to help those unable to recover their secret keys from Tezbox. This page <em>may help</em>, it also might not. Please compare the generated tz1 address to the one you're seeing in Tezbox. If the addresses match you can import the account into the <a href="https://github.com/Cryptonomic/Deployments/wiki/Galleon:-Releases">Galleon Wallet</a> after creating a new file wallet and adding the account using the secret key. Please follow the instructions in <a href="https://www.youtube.com/watch?v=fLnOcezCZU0&t=16">this video</a> If the addresses do not match and the mnemonic-based account recovery process does not work either, then it appears that Tezbox produced an incorrect mnemonic.
-        </p>
+        <h4>Usage of this page is subject to Galleon <a href="https://github.com/Cryptonomic/Deployments/blob/master/Terms_of_Service.pdf">terms</a>a> and <a href="https://github.com/Cryptonomic/Deployments/blob/master/Privacy_Policy.pdf">policies</a>.</h4>
+        <p>This address generator allows you to check if the public address associated with your mnemonic matches what you see in your account. This code runs locally. View page source to find the ConseilJS call involved in generating the keys.</p>
+        <p>This was written as an attempt to help those unable to recover their secret keys from Tezbox. We cannot guarantee that this will help you recover your account.</p>
+        <p>Please compare the generated tz1 address to the one you're seeing in Tezbox.</p>
+        <p><em>If the addresses match</em>, you can import the account into the <a href="https://github.com/Cryptonomic/Deployments/wiki/Galleon:-Releases">Galleon Wallet</a> after creating a new file wallet and adding the account using the secret key. Please follow the instructions in <a href="https://www.youtube.com/watch?v=fLnOcezCZU0&t=16">this video</a>.</p>
+        <p><em>If the addresses do NOT match</em> and the mnemonic-based account recovery process does not work either, unfortunately, it appears that Tezbox has produced an incorrect mnemonic.</p>
         <pre>
             const keyStore = await conseiljssoftsigner.KeyStoreUtils.restoreIdentityFromMnemonic(mnemonic.split(' ').join(''), '', undefined, undefined, false);
         </pre>
