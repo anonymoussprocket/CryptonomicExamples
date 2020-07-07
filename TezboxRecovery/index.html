@@ -1,8 +1,8 @@
 <html>
     <head>
         <script src="https://cdn.jsdelivr.net/gh/cryptonomic/conseiljs-softsigner/dist-web/conseiljs-softsigner.min.js"
-            integrity="sha384-aQb9FFn6CZkolxC8jtsj1vhKOQtU8QWXJKN+h1PDNjdd0ml6C4r772YuB0gfNwD4"
-            crossorigin="anonymous"></script>
+        integrity="sha384-gmo96y8/A1pPfu7t/0LS4DjMG4Djzg8ouw5ke9DzwuXDf5mRY4sK6m9M5K/GSVJZ"
+        crossorigin="anonymous"></script>
         <script>
             async function generate() {
                 const mnemonic = document.forms[0].elements.mnemonic.value;
@@ -28,7 +28,7 @@
         <form>
             <div>
                 <label for="mnemonic">Mnemonic</label>
-                <input type="text" name="mnemonic" value="boss wheat grain chuckle essence sketch stem high oak artefact vessel husband bitter false adult">
+                <input type="text" name="mnemonic" value="" placeholder="mnemonic" size="40" />
             </div>
             <div>
                 <button onClick="generate(); return false;">Generate</button>
