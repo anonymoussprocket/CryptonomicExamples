@@ -1,12 +1,14 @@
 <html>
     <head>
         <script src="https://cdn.jsdelivr.net/gh/cryptonomic/conseiljs-softsigner/dist-web/conseiljs-softsigner.min.js"
-        integrity="sha384-gmo96y8/A1pPfu7t/0LS4DjMG4Djzg8ouw5ke9DzwuXDf5mRY4sK6m9M5K/GSVJZ"
-        crossorigin="anonymous"></script>
+            integrity="sha384-gmo96y8/A1pPfu7t/0LS4DjMG4Djzg8ouw5ke9DzwuXDf5mRY4sK6m9M5K/GSVJZ"
+            crossorigin="anonymous"></script>
+        <script src="bip39words.js"></script>
         <script>
             async function generate() {
                 const mnemonic = document.forms[0].elements.mnemonic.value;
-                const keyStore = await conseiljssoftsigner.KeyStoreUtils.restoreIdentityFromMnemonic(mnemonic.split(' ').join(''), '', undefined, undefined, false);
+                const seed = mnemonic.toLowerCase().replace(/[^a-z\s]/g, '').split(' ').filter(w => bip39words.includes(w)).join('');
+                const keyStore = await conseiljssoftsigner.KeyStoreUtils.restoreIdentityFromMnemonic(seed, '', undefined, undefined, false);
                 document.getElementById('pkh').innerHTML = keyStore.publicKeyHash;
                 document.getElementById('sk').innerHTML = keyStore.secretKey;
             }
