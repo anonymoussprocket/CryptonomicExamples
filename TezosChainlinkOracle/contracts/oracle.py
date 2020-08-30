@@ -79,13 +79,12 @@ class Oracle(sp.Contract):
         # Please note that the target (i.e., the requestor) could refuse to receive the data.
         # We do not want to check active here since sp.sender == admin.
         sp.verify(self.data.admin == sp.sender, message = "Privileged operation")
-        
         request = sp.local('request', self.data.requests[request_id]).value
-        token  = sp.contract(self.token_contract.batch_transfer.get_type(), self.data.token, entry_point = "transfer").open_some()
+        token = sp.contract(self.token_contract.batch_transfer.get_type(), self.data.token, entry_point = "transfer").open_some(message = "Incompatible token interface")
         sp.transfer([sp.record(from_ = sp.to_address(sp.self), txs = [sp.record(to_ = self.data.admin, token_id = 0, amount = request.amount)])],
                     sp.tez(0),
                     token)
-        target = sp.contract(sp.TRecord(client_request_id = sp.TNat, result = value_type), request.target).open_some()
+        target = sp.contract(sp.TRecord(client_request_id = sp.TNat, result = value_type), request.target).open_some(message = "Incompatible client interface")
         sp.transfer(sp.record(client_request_id = request.client_request_id, result = result), sp.mutez(0), target)
         del self.data.requests[request_id]
         reverse_request_key = sp.record(client = request.client, client_request_id = request.client_request_id)
@@ -99,7 +98,7 @@ class Oracle(sp.Contract):
         request_id = sp.local('request_id', self.data.reverse_requests[reverse_request_key]).value
         request = sp.local('request', self.data.requests[request_id]).value
         sp.verify(request.timeout <= sp.now, message = "TTL not met")
-        token  = sp.contract(self.token_contract.batch_transfer.get_type(), self.data.token, entry_point = "transfer").open_some()
+        token = sp.contract(self.token_contract.batch_transfer.get_type(), self.data.token, entry_point = "transfer").open_some(message = "Incompatible token interface")
         sp.transfer([sp.record(from_ = sp.to_address(sp.self), txs = [sp.record(to_ = request.client, token_id = 0, amount = request.amount)])],
                     sp.tez(0),
                     token)
@@ -117,7 +116,8 @@ class Client_requester():
         sp.verify(~ waiting_request_id.is_some(), message = "Request pending")
         target = sp.set_type_expr(target, sp.TContract(sp.TRecord(client_request_id = sp.TNat, result = value_type)))
         waiting_request_id.set(sp.some(self.data.next_request_id))
-        token  = sp.contract(sp.TRecord(oracle = sp.TAddress, params = request_type), self.data.token, entry_point = "proxy").open_some()
+        sp.set_type_record_layout(request_type, (("amount", ("client_request_id", "job_id")), ("parameters", ("target", "timeout"))))
+        token  = sp.contract(sp.TRecord(oracle = sp.TAddress, params = request_type), self.data.token, entry_point = "proxy").open_some(message = "Incompatible token interface")
         params = sp.record(amount        = amount,
                            target        = sp.to_address(target),
                            job_id        = job_id,
@@ -129,7 +129,7 @@ class Client_requester():
 
     def cancel_helper(self, oracle, waiting_request_id):
         sp.verify(waiting_request_id.is_some(), message = "No pending request")
-        oracle_contract = sp.contract(sp.TNat, oracle, entry_point = "cancel_request").open_some()
+        oracle_contract = sp.contract(sp.TNat, oracle, entry_point = "cancel_request").open_some(message = "Incompatible oracle interface")
         sp.transfer(waiting_request_id.open_some(), sp.mutez(0), oracle_contract)
         waiting_request_id.set(sp.none)
 
@@ -184,9 +184,10 @@ class Link_token(FA2.FA2):
     @sp.entry_point
     def proxy(self, oracle, params):
         self.transfer.f(self, [sp.record(from_ = sp.sender, txs = [sp.record(to_ = oracle, token_id = 0, amount = params.amount)])])
+        sp.set_type_record_layout(request_type, (("amount", ("client_request_id", "job_id")), ("parameters", ("target", "timeout"))))
         oracle_contract = sp.contract(sp.TRecord(client = sp.TAddress, params = request_type),
                                       oracle,
-                                      entry_point = "create_request").open_some()
+                                      entry_point = "create_request").open_some(message = "Incompatible token interface")
         sp.transfer(sp.record(client = sp.sender, params = params), sp.mutez(0), oracle_contract)
 
 # This code was used to originate test contracts and is kept as an example
@@ -195,19 +196,20 @@ if False:
     def test():
         scenario = sp.test_scenario()
         link_admin_address = sp.address('tz1UBSgsJTTBQWGieRPZmwG3gpAy3kHd7N4y')
-        link_token = Link_token(FA2.FA2_config(), link_admin_address)
+        link_token = Link_token(FA2.FA2_config(single_asset = True), link_admin_address)
         scenario += link_token
-        link_token_address = sp.address('KT1U313dYFyMiU2aQnVCLgsFYUodz3JcdAMy')
+        link_token_address = sp.address('KT1TQR3eyYCytqBK9EB28J1taa2cX41F9R8x')
 
         oracle1_admin_address = sp.address('tz1fextP23D6Ph2zeGTP8EwkP5Y8TufeFCHA')
         oracle1 = Oracle(oracle1_admin_address, link_token, token_address = link_token_address)
         scenario += oracle1
-        oracle1_address = sp.address('KT1VDAWUJr3ZjJ4rsaXqsR4Y9VrrUN2u6GJX')
+        oracle1_address = sp.address('KT1VnsKJu8KKnut6qCqig4LVFv3n8wqq6fpy')
 
         client1_admin_address = sp.address('tz1axGtTkg1hJvGenTrhqpFbW1S8GcQpPdve')
         client1 = Client(link_token_address, oracle1_address, sp.bytes("0x0001"), client1_admin_address)
         scenario += client1
-        client1_address = sp.address('KT1Q9TX4D6irwQwMiQJR8MGXEWKbFtD7hwTn')
+        client1_address = sp.address('KT1K7LyozUeLVv5yu6XeVFwQm2feEGNQXKUN')
+
 
 if "templates" not in __name__:
     @sp.add_test(name = "Oracle")
@@ -227,7 +229,7 @@ if "templates" not in __name__:
         scenario.show([admin, oracle1, client1_admin, client2_admin])
 
         scenario.h2("Link Token")
-        link_token = Link_token(FA2.FA2_config(), admin.address)
+        link_token = Link_token(FA2.FA2_config(single_asset = True), admin.address)
         scenario += link_token
         scenario += link_token.mint(address = admin.address,
                                     amount = 100,

@@ -1,0 +1,94 @@
+{
+    "config": {
+        "tezosNode": "https://tezos-dev.cryptonomic-infra.tech/",
+        "conseilURL": "https://conseil-dev.cryptonomic-infra.tech:443",
+        "conseilApiKey": "galleon",
+        "conseilNetwork": "carthagenet",
+        "networkBlockTime": 31
+    },
+    "oracleAdmin": {
+        "mnemonic": [
+            "undo",
+            "winter",
+            "final",
+            "pear",
+            "curious",
+            "sail",
+            "dune",
+            "general",
+            "illegal",
+            "saddle",
+            "close",
+            "during",
+            "audit",
+            "pole",
+            "alert"
+        ],
+        "secret": "651ef10477aee2d3ee577712f3de8399ce1f38a0",
+        "amount": "16984334455",
+        "pkh": "tz1LBDeSAJVVwWCY4g7gqj4Ng8cgYj69Z9ab",
+        "password": "8XYykC610y",
+        "email": "hjgmehqp.sagvrcdj@tezos.example.org",
+        "secretKey": "edskS6uM9JMR5TNvrunCENwPjFPLz36k8WKaQXxJxjb2Z7QxPZ9ux2EhHXbKFia6vvZQwRsxEkefyeJqvtcYzMXCGYdoTUMq6E"
+    },
+    "oracleUserAlice": {
+        "mnemonic": [
+            "around",
+            "inspire",
+            "flavor",
+            "female",
+            "forward",
+            "muffin",
+            "decrease",
+            "silent",
+            "head",
+            "near",
+            "sick",
+            "about",
+            "diary",
+            "hurdle",
+            "wrap"
+        ],
+        "secret": "ea0959ad0a934cab75d3bb2e40217728ddde2e34",
+        "amount": "18222405586",
+        "pkh": "tz1UqvE59rXfRGhXSMVEBbgF7rqUEnLsNdLJ",
+        "password": "wG3vU9xbxP",
+        "email": "iporlxwz.fcostfjl@tezos.example.org",
+        "secretKey": "edskSARAJXuDpoDDEZT724jneSJPj8ZACqPUTEAausNNefdmPv9ZF5Zi7QPwrnZ5B28sFJf5jGbBDeTZpfcpcShxcSy21haccZ"
+    },
+    "oracleUserRobert": {
+        "mnemonic": [
+            "code",
+            "blush",
+            "valid",
+            "eager",
+            "struggle",
+            "proud",
+            "unusual",
+            "culture",
+            "awkward",
+            "virtual",
+            "solar",
+            "domain",
+            "breeze",
+            "provide",
+            "wing"
+        ],
+        "secret": "ec87d105b37c50b373352ba0921ba597d7bbe3c0",
+        "amount": "6869470938",
+        "pkh": "tz1cz7asTAZnNh7oACNvoRi1vHonrHvZiRNe",
+        "password": "xEaY5otvAP",
+        "email": "mnvsellt.ybyyiyjr@tezos.example.org",
+        "secretKey": "edskS9nUndr1auWXhpKWgjmJTs8oEDpD5pCfRdCYyP5wNdQBCbcauB7yBr9eBDpiLs8932LzkL6XCvjiTKeiF4cVfhbkVW7csU"
+    },
+    "tokenAddress": "KT1TQR3eyYCytqBK9EB28J1taa2cX41F9R8x",
+    "oracleAddress": "",
+    "clientAddress": "",
+    "oracleData": [
+        "A beautiful, smart, and loving person will be coming into your life",
+        "A dubious friend may be an enemy in camouflage",
+        "A faithful friend is a strong defense",
+        "A feather in the hand is better than a bird in the air",
+        "A fresh start will put you on your way"
+    ]
+}
