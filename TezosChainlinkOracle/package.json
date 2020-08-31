@@ -17,7 +17,7 @@
     },
     "homepage": "https://gist.github.com/anonymoussprocket",
     "dependencies": {
-        "conseiljs": "5.0.4",
+        "conseiljs": "5.0.5-beta.1",
         "conseiljs-softsigner": "5.0.3",
         "jsonpath-plus": "4.0.0",
         "loglevel": "1.6.8",

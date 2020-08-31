@@ -6,10 +6,16 @@ import smartpy as sp
 
 # Parameters of type parameters_type is a list of (name, dict) pairs.
 
-value_type = sp.TVariant(string = sp.TString)
+value_type = sp.TVariant(int = sp.TInt, string = sp.TString, bytes = sp.TBytes)
 
 def value_string(s):
     return sp.variant("string", s)
+
+def value_bytes(s):
+    return sp.variant("bytes", s)
+
+def value_int(s):
+    return sp.variant("int", s)
 
 # Request parameters
 parameters_type = sp.TMap(sp.TString, value_type)
@@ -116,7 +122,6 @@ class Client_requester():
         sp.verify(~ waiting_request_id.is_some(), message = "Request pending")
         target = sp.set_type_expr(target, sp.TContract(sp.TRecord(client_request_id = sp.TNat, result = value_type)))
         waiting_request_id.set(sp.some(self.data.next_request_id))
-        sp.set_type_record_layout(request_type, (("amount", ("client_request_id", "job_id")), ("parameters", ("target", "timeout"))))
         token  = sp.contract(sp.TRecord(oracle = sp.TAddress, params = request_type), self.data.token, entry_point = "proxy").open_some(message = "Incompatible token interface")
         params = sp.record(amount        = amount,
                            target        = sp.to_address(target),
@@ -140,6 +145,12 @@ class Client_receiver():
         waiting_request_id.set(sp.none)
         sp.set_type(client_request_id, sp.TNat)
         sp.set_type(result, value_type)
+
+    def read_int(self, x):
+        return x.open_variant("int")
+
+    def read_bytes(self, x):
+        return x.open_variant("bytes")
 
     def read_string(self, x):
         return x.open_variant("string")
@@ -184,7 +195,6 @@ class Link_token(FA2.FA2):
     @sp.entry_point
     def proxy(self, oracle, params):
         self.transfer.f(self, [sp.record(from_ = sp.sender, txs = [sp.record(to_ = oracle, token_id = 0, amount = params.amount)])])
-        sp.set_type_record_layout(request_type, (("amount", ("client_request_id", "job_id")), ("parameters", ("target", "timeout"))))
         oracle_contract = sp.contract(sp.TRecord(client = sp.TAddress, params = request_type),
                                       oracle,
                                       entry_point = "create_request").open_some(message = "Incompatible token interface")

@@ -44,10 +44,20 @@
             "args": [
               {
                 "prim": "pair",
-                "args": [ { "prim": "nat", "annots": [ "%client_request_id" ] }, { "prim": "string", "annots": [ "%result" ] } ],
+                "args": [
+                  { "prim": "nat", "annots": [ "%client_request_id" ] },
+                  {
+                    "prim": "or",
+                    "args": [
+                      { "prim": "bytes", "annots": [ "%bytes" ] },
+                      { "prim": "or", "args": [ { "prim": "int", "annots": [ "%int" ] }, { "prim": "string", "annots": [ "%string" ] } ] }
+                    ],
+                    "annots": [ "%result" ]
+                  }
+                ],
                 "annots": [ "%receive_fortune" ]
               },
-              { "prim": "nat", "annots": [ "%request_fortune" ] }
+              { "prim": "pair", "args": [ { "prim": "nat", "annots": [ "%payment" ] }, { "prim": "int", "annots": [ "%timeout" ] } ], "annots": [ "%request_fortune" ] }
             ]
           }
         ]
@@ -86,7 +96,10 @@
                     { "prim": "CONTRACT", "args": [ { "prim": "nat" } ], "annots": [ "%cancel_request" ] },
                     { "prim": "NIL", "args": [ { "prim": "operation" } ] },
                     { "prim": "SWAP" },
-                    { "prim": "IF_NONE", "args": [ [ { "prim": "PUSH", "args": [ { "prim": "int" }, { "int": "130" } ] }, { "prim": "FAILWITH" } ], [] ] },
+                    {
+                      "prim": "IF_NONE",
+                      "args": [ [ { "prim": "PUSH", "args": [ { "prim": "string" }, { "string": "Incompatible oracle interface" } ] }, { "prim": "FAILWITH" } ], [] ]
+                    },
                     { "prim": "PUSH", "args": [ { "prim": "mutez" }, { "int": "0" } ] },
                     { "prim": "DIG", "args": [ { "int": "3" } ] },
                     { "prim": "DUP" },
@@ -94,7 +107,7 @@
                     { "prim": "CDR" },
                     { "prim": "CDR" },
                     { "prim": "CDR" },
-                    { "prim": "IF_NONE", "args": [ [ { "prim": "PUSH", "args": [ { "prim": "int" }, { "int": "131" } ] }, { "prim": "FAILWITH" } ], [] ] },
+                    { "prim": "IF_NONE", "args": [ [ { "prim": "PUSH", "args": [ { "prim": "int" }, { "int": "138" } ] }, { "prim": "FAILWITH" } ], [] ] },
                     { "prim": "TRANSFER_TOKENS" },
                     { "prim": "CONS" },
                     { "prim": "SWAP" },
@@ -208,7 +221,7 @@
                           { "prim": "CDR" },
                           { "prim": "CDR" },
                           { "prim": "CDR" },
-                          { "prim": "IF_NONE", "args": [ [ { "prim": "PUSH", "args": [ { "prim": "int" }, { "int": "131" } ] }, { "prim": "FAILWITH" } ], [] ] },
+                          { "prim": "IF_NONE", "args": [ [ { "prim": "PUSH", "args": [ { "prim": "int" }, { "int": "138" } ] }, { "prim": "FAILWITH" } ], [] ] },
                           { "prim": "COMPARE" },
                           { "prim": "EQ" }
                         ]
@@ -233,6 +246,8 @@
                     { "prim": "SWAP" },
                     { "prim": "PAIR" },
                     { "prim": "DUP" },
+                    { "prim": "DUG", "args": [ { "int": "2" } ] },
+                    { "prim": "DUP" },
                     { "prim": "CDR" },
                     { "prim": "SWAP" },
                     { "prim": "CAR" },
@@ -242,7 +257,24 @@
                     { "prim": "CDR" },
                     { "prim": "CDR" },
                     { "prim": "DIG", "args": [ { "int": "3" } ] },
+                    { "prim": "DUP" },
+                    { "prim": "DUG", "args": [ { "int": "4" } ] },
                     { "prim": "CDR" },
+                    {
+                      "prim": "IF_LEFT",
+                      "args": [
+                        [ { "prim": "PUSH", "args": [ { "prim": "int" }, { "int": "156" } ] }, { "prim": "FAILWITH" } ],
+                        [
+                          {
+                            "prim": "IF_LEFT",
+                            "args": [
+                              [ { "prim": "PUSH", "args": [ { "prim": "int" }, { "int": "156" } ] }, { "prim": "FAILWITH" } ],
+                              [ { "prim": "DIG", "args": [ { "int": "5" } ] }, { "prim": "DROP" }, { "prim": "DIG", "args": [ { "int": "4" } ] }, { "prim": "DROP" } ]
+                            ]
+                          }
+                        ]
+                      ]
+                    },
                     { "prim": "PAIR" },
                     { "prim": "SWAP" },
                     { "prim": "PAIR" },
@@ -308,7 +340,20 @@
                                 {
                                   "prim": "pair",
                                   "args": [
-                                    { "prim": "map", "args": [ { "prim": "string" }, { "prim": "string" } ], "annots": [ "%parameters" ] },
+                                    {
+                                      "prim": "map",
+                                      "args": [
+                                        { "prim": "string" },
+                                        {
+                                          "prim": "or",
+                                          "args": [
+                                            { "prim": "bytes", "annots": [ "%bytes" ] },
+                                            { "prim": "or", "args": [ { "prim": "int", "annots": [ "%int" ] }, { "prim": "string", "annots": [ "%string" ] } ] }
+                                          ]
+                                        }
+                                      ],
+                                      "annots": [ "%parameters" ]
+                                    },
                                     { "prim": "pair", "args": [ { "prim": "address", "annots": [ "%target" ] }, { "prim": "timestamp", "annots": [ "%timeout" ] } ] }
                                   ]
                                 }
@@ -320,15 +365,35 @@
                       ],
                       "annots": [ "%proxy" ]
                     },
-                    { "prim": "IF_NONE", "args": [ [ { "prim": "PUSH", "args": [ { "prim": "int" }, { "int": "118" } ] }, { "prim": "FAILWITH" } ], [] ] },
+                    {
+                      "prim": "IF_NONE",
+                      "args": [ [ { "prim": "PUSH", "args": [ { "prim": "string" }, { "string": "Incompatible token interface" } ] }, { "prim": "FAILWITH" } ], [] ]
+                    },
                     { "prim": "PUSH", "args": [ { "prim": "mutez" }, { "int": "0" } ] },
                     { "prim": "NOW" },
-                    { "prim": "PUSH", "args": [ { "prim": "int" }, { "int": "300" } ] },
+                    { "prim": "PUSH", "args": [ { "prim": "int" }, { "int": "60" } ] },
+                    { "prim": "DIG", "args": [ { "int": "5" } ] },
+                    { "prim": "DUP" },
+                    { "prim": "DUG", "args": [ { "int": "6" } ] },
+                    { "prim": "CDR" },
+                    { "prim": "MUL" },
                     { "prim": "ADD" },
                     { "prim": "SELF", "annots": [ "%receive_fortune" ] },
                     { "prim": "ADDRESS" },
                     { "prim": "PAIR", "annots": [ "%target", "%timeout" ] },
-                    { "prim": "EMPTY_MAP", "args": [ { "prim": "string" }, { "prim": "string" } ] },
+                    {
+                      "prim": "EMPTY_MAP",
+                      "args": [
+                        { "prim": "string" },
+                        {
+                          "prim": "or",
+                          "args": [
+                            { "prim": "bytes", "annots": [ "%bytes" ] },
+                            { "prim": "or", "args": [ { "prim": "int", "annots": [ "%int" ] }, { "prim": "string", "annots": [ "%string" ] } ] }
+                          ]
+                        }
+                      ]
+                    },
                     { "prim": "PAIR", "annots": [ "%parameters" ] },
                     { "prim": "DIG", "args": [ { "int": "5" } ] },
                     { "prim": "DUP" },
@@ -343,6 +408,7 @@
                     { "prim": "CAR" },
                     { "prim": "PAIR", "annots": [ "%client_request_id", "%job_id" ] },
                     { "prim": "DIG", "args": [ { "int": "5" } ] },
+                    { "prim": "CAR" },
                     { "prim": "PAIR", "annots": [ "%amount" ] },
                     { "prim": "PAIR" },
                     { "prim": "DIG", "args": [ { "int": "4" } ] },

@@ -4,7 +4,7 @@ import * as fs from 'fs';
 
 import { registerFetch, registerLogger } from 'conseiljs';
 
-import { TezosNodeReader, TezosNodeWriter, TezosConseilClient, TezosMessageUtils, KeyStore, Signer } from 'conseiljs';
+import { TezosNodeReader, TezosNodeWriter, TezosConseilClient, TezosMessageUtils, KeyStore, Signer, ChainlinkTokenHelper } from 'conseiljs';
 import { KeyStoreUtils, SoftSigner } from 'conseiljs-softsigner';
 
 const logger = log.getLogger('conseiljs');
@@ -22,7 +22,7 @@ function clearRPCOperationGroupHash(hash: string) {
 }
 
 function init() {
-    state = JSON.parse(fs.readFileSync('../state.json').toString());
+    state = JSON.parse(fs.readFileSync('state.json').toString());
     tezosNode = state.config.tezosNode;
     conseilServer = { url: state.config.conseilURL, apiKey: state.config.conseilApiKey, network: state.config.conseilNetwork };
     networkBlockTime = state.config.networkBlockTime;
@@ -67,8 +67,18 @@ async function revealAccount(signer: Signer, keyStore: KeyStore) {
 async function deployTokenContract(signer: Signer, keyStore: KeyStore, activate: boolean, fee: number, timeout: number, adminAddress: string, tokenAddress: string): Promise<string> {
     console.log('~~ deployTokenContract');
 
+    /*
+    {
+  "prim": "Pair",
+  "args": [
+    { "prim": "Pair", "args": [ { "string": "${adminAddress}" }, { "prim": "Pair", "args": [ { "int": "0" }, [] ] } ] },
+    { "prim": "Pair", "args": [ { "prim": "Pair", "args": [ { "prim": "Unit" }, [] ] }, { "prim": "Pair", "args": [ { "prim": "False" }, [] ] } ] }
+  ]
+}
+    */
+
     const storage = `{ "prim": "Pair", "args": [ { "prim": "Pair", "args": [ { "string": "${adminAddress}" }, { "prim": "Pair", "args": [ { "int": "0" }, [] ] } ] }, { "prim": "Pair", "args": [ { "prim": "Pair", "args": [ { "prim": "Unit" }, [] ] }, { "prim": "Pair", "args": [ { "prim": "False" }, [] ] } ] } ] }`;
-    const contract = fs.readFileSync('token.micheline').toString();
+    const contract = fs.readFileSync('contracts/token.micheline').toString();
 
     const {gas, storageCost} = await TezosNodeWriter.testContractDeployOperation(tezosNode, 'main', keyStore, 0, undefined, 500_000, 20_000, 800_000, contract, storage);
 
@@ -89,7 +99,7 @@ async function deployOracleContract(signer: Signer, keyStore: KeyStore, activate
     console.log('~~ deployOracleContract');
 
     const storage = `{ "prim": "Pair", "args": [ { "prim": "Pair", "args": [ { "prim": "Pair", "args": [ { "prim": ${activate ? '"True"' : '"False"'} }, { "string": "${adminAddress}" } ] }, { "prim": "Pair", "args": [ { "int": "${fee}" }, { "int": "${timeout}" } ] } ] }, { "prim": "Pair", "args": [ { "prim": "Pair", "args": [ { "int": "0" }, [] ] }, { "prim": "Pair", "args": [ [], { "string": "${tokenAddress}" } ] } ] } ] }`;
-    const contract = fs.readFileSync('oracle.micheline').toString();
+    const contract = fs.readFileSync('contracts/oracle.micheline').toString();
 
     const {gas, storageCost} = await TezosNodeWriter.testContractDeployOperation(tezosNode, 'main', keyStore, 0, undefined, 100_000, 10_000, 800_000, contract, storage);
 
@@ -106,7 +116,7 @@ async function deployFortuneSeekerContract(signer: Signer, keyStore: KeyStore, a
     console.log('~~ deployOracleContract');
 
     const storage = `{ "prim": "Pair", "args": [ { "prim": "Pair", "args": [ { "string": "${adminAddress}" }, { "prim": "Pair", "args": [ { "string": "" }, { "bytes": "0001" } ] } ] }, { "prim": "Pair", "args": [ { "prim": "Pair", "args": [ { "int": "1" }, { "string": "${oracleAddress}" } ] }, { "prim": "Pair", "args": [ { "string": "${tokenAddress}" }, { "prim": "None" } ] } ] } ] }`;
-    const contract = fs.readFileSync('fortune_seeker.micheline').toString();
+    const contract = fs.readFileSync('contracts/fortune_seeker.micheline').toString();
 
     const {gas, storageCost} = await TezosNodeWriter.testContractDeployOperation(tezosNode, 'main', keyStore, 0, undefined, 100_000, 10_000, 800_000, contract, storage);
 
@@ -117,6 +127,23 @@ async function deployFortuneSeekerContract(signer: Signer, keyStore: KeyStore, a
     const conseilResult = await TezosConseilClient.awaitOperationConfirmation(conseilServer, conseilServer.network, groupid, 7, networkBlockTime);
 
     return conseilResult.originated_contracts;
+}
+
+async function seedTokens(amount: number) {
+    const keyStore = await KeyStoreUtils.restoreIdentityFromSecretKey(state.oracleUserZach.secretKey);
+    const signer = await SoftSigner.createSigner(TezosMessageUtils.writeKeyWithHint(keyStore.secretKey, 'edsk'));
+
+
+    let transfers: any[] = [];
+    transfers.push({ address: state.oracleAdmin.pkh, tokenid: 0, balance: amount });
+    transfers.push({ address: state.oracleUserAlice.pkh, tokenid: 0, balance: amount });
+    transfers.push({ address: state.oracleAddress, tokenid: 0, balance: amount });
+    transfers.push({ address: state.clientAddress, tokenid: 0, balance: amount });
+
+    const groupid = await ChainlinkTokenHelper.transfer(tezosNode, state.tokenAddress, signer, keyStore, 300_000, keyStore.publicKeyHash, transfers);
+    console.log(`Injected transaction operation with ${groupid}`);
+    const conseilResult = await TezosConseilClient.awaitOperationConfirmation(conseilServer, conseilServer.network, groupid, 7, networkBlockTime);
+    console.log(JSON.stringify(conseilResult, null, 4));
 }
 
 async function run() {
@@ -159,12 +186,14 @@ async function run() {
         const clientKeyStore = await KeyStoreUtils.restoreIdentityFromSecretKey(state.oracleUserZach.secretKey);
         const clientSigner = await SoftSigner.createSigner(TezosMessageUtils.writeKeyWithHint(clientKeyStore.secretKey, 'edsk'));
 
-        const clientAddress = await deployFortuneSeekerContract(clientSigner, clientKeyStore, clientKeyStore.publicKeyHash, state.oracleAddress, state.tokenContract);
+        const clientAddress = await deployFortuneSeekerContract(clientSigner, clientKeyStore, clientKeyStore.publicKeyHash, state.oracleAddress, state.tokenAddress);
         state.clientAddress = clientAddress;
         changed = true;
     }
 
-    if (changed) { fs.writeFileSync('../state.json', JSON.stringify(state, null, 4)); }
+    if (changed) { fs.writeFileSync('state.json', JSON.stringify(state, null, 4)); }
+
+    await seedTokens(10);
 }
 
 run();

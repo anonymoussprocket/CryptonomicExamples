@@ -5,7 +5,7 @@ import { JSONPath } from 'jsonpath-plus';
 
 import { registerFetch, registerLogger } from 'conseiljs';
 
-import { TezosNodeReader, TezosNodeWriter, TezosConseilClient, TezosMessageUtils, KeyStore, Signer } from 'conseiljs';
+import { TezosNodeReader, TezosNodeWriter, TezosConseilClient, TezosMessageUtils, KeyStore, Signer, TezosParameterFormat } from 'conseiljs';
 import { KeyStoreUtils, SoftSigner } from 'conseiljs-softsigner';
 
 const logger = log.getLogger('conseiljs');
@@ -24,6 +24,16 @@ interface OracleStorage {
     token: string;
 }
 
+interface OracleRequest {
+    amount: number;
+    client: string;
+    requestId: number;
+    jobId: string;
+    params: any;
+    target: string;
+    timestamp: Date;
+}
+
 let state: any;
 let tezosNode: string;
 let conseilServer: any;
@@ -33,14 +43,14 @@ let oracleAddress: string;
 let pendingCheck = false;
 let monitor: any;
 let mapId: number;
-let nextRequestId: number;
+let currentRequestId: number;
 
 function clearRPCOperationGroupHash(hash: string) {
     return hash.replace(/\"/g, '').replace(/\n/, '');
 }
 
 function init() {
-    state = JSON.parse(fs.readFileSync('../state.json').toString());
+    state = JSON.parse(fs.readFileSync('state.json').toString());
     tezosNode = state.config.tezosNode;
     conseilServer = { url: state.config.conseilURL, apiKey: state.config.conseilApiKey, network: state.config.conseilNetwork };
     networkBlockTime = state.config.networkBlockTime;
@@ -62,23 +72,29 @@ async function getSimpleStorage(): Promise<OracleStorage> {
     };
 }
 
-async function checkForRequest() {
+async function checkForRequest(signer: Signer, keyStore: KeyStore, ) {
     if (pendingCheck) { return; }
 
     pendingCheck = true;
     try {
-        const packedKey = TezosMessageUtils.encodeBigMapKey(Buffer.from(TezosMessageUtils.writePackedData(nextRequestId, 'net'), 'hex'));
+        const packedKey = TezosMessageUtils.encodeBigMapKey(Buffer.from(TezosMessageUtils.writePackedData(currentRequestId, 'nat'), 'hex'));
         const mapResult = await TezosNodeReader.getValueForBigMapKey(tezosNode, mapId, packedKey);
-
-        console.log(JSON.stringify(mapResult));
 
         // TODO: example with Conseil
 
-        //JSONPath({ path: '$.args[1][*].args', json: mapResult }).forEach(v => allowances[v[0]['string']] = Number(v[1]['int']));
+        const request = {
+            amount: Number(JSONPath({ path: '$.args[0].args[0].int', json: mapResult })[0]),
+            client: JSONPath({ path: '$.args[0].args[1].args[0].string', json: mapResult })[0],
+            requestId: Number(JSONPath({ path: '$.args[0].args[1].args[1].int', json: mapResult })[0]),
+            jobId: JSONPath({ path: '$.args[1].args[0].args[0].bytes', json: mapResult })[0],
+            params: {}, // $.args[1].args[0].args[1]
+            target: JSONPath({ path: '$.args[1].args[1].args[0].string', json: mapResult })[0],
+            timestamp: new Date(JSONPath({ path: '$.args[1].args[1].args[1].string', json: mapResult })[0])
+        };
 
-        processRequest();
+        processRequest(signer, keyStore, request);
 
-        nextRequestId += 1;
+        currentRequestId += 1;
     } catch (err) {
         console.log(`error in checkForRequest, ${JSON.stringify(err)}`);
         console.trace(err);
@@ -87,8 +103,18 @@ async function checkForRequest() {
     }
 }
 
-async function processRequest() {
-    //state.oracleData
+async function processRequest(signer: Signer, keyStore: KeyStore, request: OracleRequest) {
+    const fee = 300_000;
+    const gasLimit = 500_000;
+    const storageFee = 3_000;
+
+    const fortune = state.oracleData[Math.floor(Math.random() * state.oracleData.length - 1)];
+    const nodeResult = await TezosNodeWriter.sendContractInvocationOperation(tezosNode, signer, keyStore, state.oracleAddress, 0, fee, storageFee, gasLimit, 'fulfill_request', `(Pair ${request.requestId} (Right (Right "${fortune}")))`, TezosParameterFormat.Michelson);
+
+    const groupid = clearRPCOperationGroupHash(nodeResult.operationGroupID);
+
+    console.log(`Injected transaction operation with ${groupid}`);
+    await TezosConseilClient.awaitOperationConfirmation(conseilServer, conseilServer.network, groupid, 10, networkBlockTime);
 }
 
 async function run() {
@@ -99,9 +125,11 @@ async function run() {
 
     const oracleStorage = await getSimpleStorage();
     mapId = oracleStorage.map;
-    nextRequestId = oracleStorage.counter;
+    currentRequestId = oracleStorage.counter - 1;
 
-    monitor = setInterval(async () => { await checkForRequest() }, networkBlockTime * 1000);
+    await checkForRequest(adminSigner, adminKeyStore);
+
+    //monitor = setInterval(async () => { await checkForRequest() }, networkBlockTime * 1000);
 }
 
 run();

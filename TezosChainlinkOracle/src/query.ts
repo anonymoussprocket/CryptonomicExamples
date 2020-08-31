@@ -5,7 +5,7 @@ import { JSONPath } from 'jsonpath-plus';
 
 import { registerFetch, registerLogger } from 'conseiljs';
 
-import { TezosNodeReader, TezosNodeWriter, TezosConseilClient, TezosMessageUtils, TezosParameterFormat, KeyStore, Signer, MultiAssetTokenHelper } from 'conseiljs';
+import { TezosNodeReader, TezosNodeWriter, TezosConseilClient, TezosMessageUtils, TezosParameterFormat, KeyStore, Signer, ChainlinkTokenHelper } from 'conseiljs';
 import { KeyStoreUtils, SoftSigner } from 'conseiljs-softsigner';
 
 const logger = log.getLogger('conseiljs');
@@ -40,7 +40,7 @@ function clearRPCOperationGroupHash(hash: string) {
 }
 
 function init() {
-    state = JSON.parse(fs.readFileSync('../state.json').toString());
+    state = JSON.parse(fs.readFileSync('state.json').toString());
     tezosNode = state.config.tezosNode;
     conseilServer = { url: state.config.conseilURL, apiKey: state.config.conseilApiKey, network: state.config.conseilNetwork };
     networkBlockTime = state.config.networkBlockTime;
@@ -70,19 +70,19 @@ async function getSimpleStorage(): Promise<ClientStorage> {
 }
 
 async function checkFortune() {
-    
+    // TODO
 }
 
 async function switchOracle() {
-    //KT1TQR3eyYCytqBK9EB28J1taa2cX41F9R8x
+    // TODO
 }
 
-async function requestFortune(signer: Signer, keyStore: KeyStore, payment: number) {
+async function requestFortune(signer: Signer, keyStore: KeyStore, payment: number, timeout: number = 5) {
     const fee = 300_000;
     const gasLimit = 500_000;
     const storageFee = 3_000;
 
-    const nodeResult = await TezosNodeWriter.sendContractInvocationOperation(tezosNode, signer, keyStore, clientAddress, 0, fee, storageFee, gasLimit, 'request_fortune', '0', TezosParameterFormat.Michelson);
+    const nodeResult = await TezosNodeWriter.sendContractInvocationOperation(tezosNode, signer, keyStore, clientAddress, 0, fee, storageFee, gasLimit, 'request_fortune', `(Pair ${payment} ${timeout})`, TezosParameterFormat.Michelson);
     //const nodeResult = await TezosNodeWriter.sendContractInvocationOperation(tezosNode, signer, keyStore, clientAddress, 0, fee, storageFee, gasLimit, '', `(Right (Right Unit))`, TezosParameterFormat.Michelson);
     const groupid = clearRPCOperationGroupHash(nodeResult.operationGroupID);
 
@@ -92,12 +92,30 @@ async function requestFortune(signer: Signer, keyStore: KeyStore, payment: numbe
     console.log(JSON.stringify(conseilResult));
 }
 
-async function confirmTokenBalance(address: string, minimum: number) {
-    const storage = await MultiAssetTokenHelper.getSimpleStorage(tezosNode, tokenAddress);
-    const token = await MultiAssetTokenHelper.getTokenDefinition(tezosNode, storage.metadataMap);
-    const balance = await MultiAssetTokenHelper.getAccountBalance(tezosNode, storage.balanceMap, address, token.tokenid);
+async function cancelFortune(signer: Signer, keyStore: KeyStore, requestId: number) {
+    const fee = 300_000;
+    const gasLimit = 500_000;
+    const storageFee = 3_000;
 
-    if (balance < minimum) { throw new Error('Insufficient token balance'); }
+    //const nodeResult = await TezosNodeWriter.sendContractInvocationOperation(tezosNode, signer, keyStore, clientAddress, 0, fee, storageFee, gasLimit, 'cancel_fortune', 'Unit', TezosParameterFormat.Michelson);
+    const nodeResult = await TezosNodeWriter.sendContractInvocationOperation(tezosNode, signer, keyStore, clientAddress, 0, fee, storageFee, gasLimit, '', '(Left (Left Unit))', TezosParameterFormat.Michelson);
+    const groupid = clearRPCOperationGroupHash(nodeResult.operationGroupID);
+
+    console.log(`Injected transaction operation with ${groupid}`);
+    const conseilResult = await TezosConseilClient.awaitOperationConfirmation(conseilServer, conseilServer.network, groupid, 7, networkBlockTime);
+
+    console.log(JSON.stringify(conseilResult));
+}
+
+async function confirmTokenBalance(address: string, minimum: number) {
+    const storage = await ChainlinkTokenHelper.getSimpleStorage(tezosNode, tokenAddress);
+    const token = await ChainlinkTokenHelper.getTokenDefinition(tezosNode, storage.metadataMap);
+    try {
+        const balance = await ChainlinkTokenHelper.getAccountBalance(tezosNode, storage.balanceMap, address);
+        if (balance < minimum) { throw new Error('Insufficient token balance'); }
+    } catch {
+        throw new Error('No balance found');
+    }
 }
 
 async function run() {
@@ -105,17 +123,18 @@ async function run() {
 
     const oracleFee = 1;
 
-    const userKeyStore = await KeyStoreUtils.restoreIdentityFromSecretKey(state.oracleUserZach.secretKey);
+    const userKeyStore = await KeyStoreUtils.restoreIdentityFromSecretKey(state.oracleUserAlice.secretKey);
     const userSigner = await SoftSigner.createSigner(TezosMessageUtils.writeKeyWithHint(userKeyStore.secretKey, 'edsk'));
 
     await confirmTokenBalance(userKeyStore.publicKeyHash, oracleFee);
 
     const contractState = await getSimpleStorage();
-    //console.log(JSON.stringify(contractState, null, 4));
-    currentFortune = contractState.fortune;
+    console.log(`current fortune: "${contractState.fortune}"`);
 
     //monitor = setInterval(async () => { await checkFortune() }, networkBlockTime * 1000 * 5);
+
     await requestFortune(userSigner, userKeyStore, oracleFee);
+    //await cancelFortune(userSigner, userKeyStore,1);
 }
 
 run();
