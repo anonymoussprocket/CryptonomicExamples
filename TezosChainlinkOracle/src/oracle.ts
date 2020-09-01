@@ -32,6 +32,7 @@ interface OracleRequest {
     params: any;
     target: string;
     timestamp: Date;
+    oracleRequestId: number;
 }
 
 let state: any;
@@ -89,7 +90,8 @@ async function checkForRequest(signer: Signer, keyStore: KeyStore, ) {
             jobId: JSONPath({ path: '$.args[1].args[0].args[0].bytes', json: mapResult })[0],
             params: {}, // $.args[1].args[0].args[1]
             target: JSONPath({ path: '$.args[1].args[1].args[0].string', json: mapResult })[0],
-            timestamp: new Date(JSONPath({ path: '$.args[1].args[1].args[1].string', json: mapResult })[0])
+            timestamp: new Date(JSONPath({ path: '$.args[1].args[1].args[1].string', json: mapResult })[0]),
+            oracleRequestId: currentRequestId
         };
 
         processRequest(signer, keyStore, request);
@@ -109,7 +111,7 @@ async function processRequest(signer: Signer, keyStore: KeyStore, request: Oracl
     const storageFee = 3_000;
 
     const fortune = state.oracleData[Math.floor(Math.random() * state.oracleData.length - 1)];
-    const nodeResult = await TezosNodeWriter.sendContractInvocationOperation(tezosNode, signer, keyStore, state.oracleAddress, 0, fee, storageFee, gasLimit, 'fulfill_request', `(Pair ${request.requestId} (Right (Right "${fortune}")))`, TezosParameterFormat.Michelson);
+    const nodeResult = await TezosNodeWriter.sendContractInvocationOperation(tezosNode, signer, keyStore, state.oracleAddress, 0, fee, storageFee, gasLimit, 'fulfill_request', `(Pair ${request.oracleRequestId} (Right (Right "${fortune}")))`, TezosParameterFormat.Michelson);
 
     const groupid = clearRPCOperationGroupHash(nodeResult.operationGroupID);
 

@@ -193,7 +193,7 @@ async function run() {
 
     if (changed) { fs.writeFileSync('state.json', JSON.stringify(state, null, 4)); }
 
-    await seedTokens(10);
+    await seedTokens(1000);
 }
 
 run();

@@ -21,7 +21,7 @@ let tokenAddress: string;
 let clientAddress: string;
 
 function init() {
-    state = JSON.parse(fs.readFileSync('../state.json').toString());
+    state = JSON.parse(fs.readFileSync('state.json').toString());
     tezosNode = state.config.tezosNode;
     conseilServer = { url: state.config.conseilURL, apiKey: state.config.conseilApiKey, network: state.config.conseilNetwork };
     networkBlockTime = state.config.networkBlockTime;
