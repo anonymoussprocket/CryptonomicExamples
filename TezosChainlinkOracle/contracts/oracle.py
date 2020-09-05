@@ -67,7 +67,7 @@ class Oracle(sp.Contract):
                                 amount            = amount,
                                 timeout           = timeout,
                                 client_request_id = client_request_id)
-        reverse_request_key = sp.record(client = client, client_request_id = client_request_id)
+        reverse_request_key = sp.compute(sp.record(client = client, client_request_id = client_request_id))
         sp.verify(~self.data.reverse_requests.contains(reverse_request_key), message = "Bad request key")
         self.data.reverse_requests[reverse_request_key] = self.data.next_id
         self.data.requests[self.data.next_id] = new_request
@@ -100,7 +100,7 @@ class Oracle(sp.Contract):
     def cancel_request(self, client_request_id):
         # We do not want to check active here (it would be bad for the client).
         # sp.sender needs to be validated; this process is done through the use of the reverse_request_key.
-        reverse_request_key = sp.record(client = sp.sender, client_request_id = client_request_id)
+        reverse_request_key = sp.compute(sp.record(client = sp.sender, client_request_id = client_request_id))
         request_id = sp.local('request_id', self.data.reverse_requests[reverse_request_key]).value
         request = sp.local('request', self.data.requests[request_id]).value
         sp.verify(request.timeout <= sp.now, message = "TTL not met")
@@ -163,8 +163,7 @@ class Client(sp.Contract, Client_requester, Client_receiver):
                   fortune           = '',
                   next_request_id   = 1,
                   waiting_fortune_id = sp.none,
-                  fortune_job_id     = fortune_job_id
-                  )
+                  fortune_job_id     = fortune_job_id)
 
     @sp.entry_point
     def receive_fortune(self, client_request_id, result):
@@ -200,15 +199,47 @@ class Link_token(FA2.FA2):
                                       entry_point = "create_request").open_some(message = "Incompatible token interface")
         sp.transfer(sp.record(client = sp.sender, params = params), sp.mutez(0), oracle_contract)
 
+class TokenFaucet(sp.Contract):
+    def __init__(self,
+                 admin,
+                 token_contract,
+                 token_address  = None,
+                 max_amount     = 10):
+        self.token_contract = token_contract
+        if token_address is None:
+            token_address = token_contract.address
+        self.init(admin               = admin,
+                  active              = True,
+                  max_amount          = max_amount,
+                  token               = token_address)
+
+    @sp.entry_point
+    def request_tokens(self):
+        # TODO: check token balance for sender
+        # TODO: if current token balance - self.data.max_amount > 0, send
+
+        token = sp.contract(self.token_contract.batch_transfer.get_type(), self.data.token, entry_point = "transfer").open_some(message = "Incompatible token interface")
+        sp.transfer([sp.record(from_ = sp.to_address(sp.self), txs = [sp.record(to_ = sp.sender, token_id = 0, amount = self.data.max_amount)])], sp.tez(0), token)
+
+    @sp.entry_point
+    def configure(self, params):
+        sp.verify(self.data.admin == sp.sender, message = "Privileged operation")
+        pass
+
 # This code was used to originate test contracts and is kept as an example
 if False:
     @sp.add_test(name = "Origination")
     def test():
         scenario = sp.test_scenario()
+
         link_admin_address = sp.address('tz1UBSgsJTTBQWGieRPZmwG3gpAy3kHd7N4y')
         link_token = Link_token(FA2.FA2_config(single_asset = True), link_admin_address)
         scenario += link_token
         link_token_address = sp.address('KT1TQR3eyYCytqBK9EB28J1taa2cX41F9R8x')
+
+        token_faucet = TokenFaucet(link_admin_address, link_token, link_token_address, 10)
+        scenario += token_faucet
+        #token_faucet_address = sp.address('KT1TQR3eyYCytqBK9EB28J1taa2cX41F9R8x')
 
         oracle1_admin_address = sp.address('tz1fextP23D6Ph2zeGTP8EwkP5Y8TufeFCHA')
         oracle1 = Oracle(oracle1_admin_address, link_token, token_address = link_token_address)
@@ -219,7 +250,6 @@ if False:
         client1 = Client(link_token_address, oracle1_address, sp.bytes("0x0001"), client1_admin_address)
         scenario += client1
         client1_address = sp.address('KT1K7LyozUeLVv5yu6XeVFwQm2feEGNQXKUN')
-
 
 if "templates" not in __name__:
     @sp.add_test(name = "Oracle")
@@ -242,9 +272,13 @@ if "templates" not in __name__:
         link_token = Link_token(FA2.FA2_config(single_asset = True), admin.address)
         scenario += link_token
         scenario += link_token.mint(address = admin.address,
-                                    amount = 100,
+                                    amount = 200,
                                     symbol = 'tzLINK',
                                     token_id = 0).run(sender = admin)
+
+        scenario.h2("Token Faucet")
+        faucet = TokenFaucet(admin.address, link_token, link_token.address, 10)
+        scenario += faucet
 
         scenario.h2("Oracle")
         oracle = Oracle(oracle1.address, link_token)
@@ -259,10 +293,12 @@ if "templates" not in __name__:
         scenario += client2
 
         scenario.h2("Tokens")
-        scenario += link_token.transfer([sp.record(from_ = admin.address, txs = [sp.record(to_ = client1.address, token_id = 0, amount = 20)])]).run(sender = admin)
-        scenario += link_token.transfer([sp.record(from_ = admin.address, txs = [sp.record(to_ = client2.address, token_id = 0, amount = 20)])]).run(sender = admin)
-        scenario += link_token.transfer([sp.record(from_ = admin.address, txs = [sp.record(to_ = oracle.address , token_id = 0, amount = 1)])]).run(sender = admin)
+        scenario += link_token.transfer([sp.record(from_ = admin.address, txs = [sp.record(to_ = faucet.address, token_id = 0, amount = 100)])]).run(sender = admin)
         scenario += link_token.transfer([sp.record(from_ = admin.address, txs = [sp.record(to_ = oracle1.address, token_id = 0, amount = 1)])]).run(sender = admin)
+        scenario += faucet.request_tokens().run(sender = client1_admin)
+        scenario += link_token.transfer([sp.record(from_ = client1_admin.address, txs = [sp.record(to_ = client1.address, token_id = 0, amount = 10)])]).run(sender = client1_admin)
+        scenario += faucet.request_tokens().run(sender = client2_admin)
+        scenario += link_token.transfer([sp.record(from_ = client2_admin.address, txs = [sp.record(to_ = client2.address, token_id = 0, amount = 10)])]).run(sender = client2_admin)
 
         scenario.h2("Client1 sends a request that gets fulfilled")
         scenario.h3("A request")
