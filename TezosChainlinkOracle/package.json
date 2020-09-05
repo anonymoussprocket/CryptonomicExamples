@@ -5,9 +5,9 @@
     "scripts": {
         "postinstall": "npm run build",
         "build": "tsc",
-        "bootstrap": "node dist/bootstrap.js",
+        "bootstrap": "node dist/initialize.js",
         "oracle": "node dist/oracle.js",
-        "query": "node dist/query.js",
+        "client": "node dist/client.js",
         "token": "node dist/token.js"
     },
     "license": "UNLICENSED",
@@ -17,7 +17,7 @@
     },
     "homepage": "https://gist.github.com/anonymoussprocket",
     "dependencies": {
-        "conseiljs": "5.0.5-beta.1",
+        "conseiljs": "5.0.5-beta.2",
         "conseiljs-softsigner": "5.0.3",
         "jsonpath-plus": "4.0.0",
         "loglevel": "1.6.8",
