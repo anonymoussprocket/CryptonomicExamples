@@ -5,7 +5,7 @@
     "scripts": {
         "postinstall": "npm run build",
         "build": "tsc",
-        "bootstrap": "node dist/initialize.js",
+        "deploy": "node dist/initialize.js",
         "oracle": "node dist/oracle.js",
         "client": "node dist/client.js",
         "token": "node dist/token.js"

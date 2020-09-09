@@ -12,9 +12,9 @@ This tutorial assumes you have some familiarity with [SmartPy](https://smartpy.i
 
 There is a rich [example of an oracle](https://smartpy.io/dev/index.html?template=oracle.py) available in the SmartPy web-based IDE, we will modify it to serve [fortune cookie fortunes](https://joshmadison.com/2008/04/20/fortune-cookie-fortunes/) to smart contracts seeking to understand their future.
 
-This system, at the moment, consists of three contracts and several human participants. There is a token contract to represent [$LINK](https://coinmarketcap.com/currencies/chainlink/) on Tezos, an oracle contract and a client contract that would be interacting with the oracle to get get fortunes in this case.
+This system, at the moment, consists of three contracts and several human participants. There is a token contract to represent [$LINK](https://coinmarketcap.com/currencies/chainlink/) on Tezos, an oracle contract and a client contract that would be interacting with the oracle to get fortunes in this case.
 
-Different accounts would be managing these contracts, so that's at least two implicit accounts to get from the [Tezos faucet](http://faucet.tzalpha.net) for the testnet. We're assuming re-use of the [token contract](https://carthage.tzkt.io/KT1TQR3eyYCytqBK9EB28J1taa2cX41F9R8x/entrypoints). **WHEAR??!** There is a faucet available for it. One account would be used to deploy the oracle contract and another to deploy the client contract. Technically speaking the client contract has two parts that can be deployed separately – the requestor and the recipient. For simplicity, in this tutorial it's a single contract.
+Different accounts would be managing these contracts, so that's at least two implicit accounts to get from the [Tezos faucet](http://faucet.tzalpha.net) for the testnet. We're assuming re-use of the [token contract](https://carthage.tzkt.io/KT1TQR3eyYCytqBK9EB28J1taa2cX41F9R8x/entrypoints). There is a [faucet available](https://smartpy.io/dev/explorer.html?address=KT1JWENqDEoGasUty7m22QBPk6gfau8H4VQS) for it. One account would be used to deploy the oracle contract and another to deploy the client contract. Technically speaking the client contract has two parts that can be deployed separately – the requestor and the recipient. For simplicity, in this tutorial it's a single contract.
 
 ### The Token
 
@@ -60,7 +60,7 @@ Next we will need [faucet](http://faucet.tzalpha.net) accounts for `oracleAdmin`
 
 ```json
 {
-    "mnemonic": [ ... ],
+    "mnemonic": [ "", "" ],
     "secret": "...",
     "amount": "...",
     "pkh": "...",
@@ -79,9 +79,9 @@ These accounts will be activated and revealed in the initialization step. The fi
 
 Once the `state.json` file is correctly populated, run `npm i` which will also execute `npm run build`. These steps will get the necessary dependencies and transpile Typescript into JavaScript.
 
-### Initialize
+### Deploy
 
-`npm run initialize`
+`npm run deploy`
 
 Before we can demonstrate the operation of the system, we need to initialize all the participants. Running this command will activate and reveal the `oracleAdmin` and `oracleUserAlice` accounts if needed. It will also deploy a token contract if one is missing, for this example we'll be using [KT1TQR3eyYCytqBK9EB28J1taa2cX41F9R8x](https://arronax.io/tezos/carthagenet/accounts/KT1TQR3eyYCytqBK9EB28J1taa2cX41F9R8x). Three other steps in this process are to deploy an oracle and a client contract. All the contract code is taken from the pre-generated Micheline output of the SmartPy IDE, based on oracle.py code. The final step is to seed some testnet tokens into the related accounts, this assumes that at least one of your accounts has tokens to share.
 
@@ -90,15 +90,15 @@ To see how these contracts work in concert before deployment, load [oracle.py](h
 The code that is executed by this command is contained in [initialize.ts](https://github.com/anonymoussprocket/CryptonomicExamples/blob/master/TezosChainlinkOracle/src/initialize.ts):
 
 1. [Activate & reveal accounts](https://github.com/anonymoussprocket/CryptonomicExamples/blob/master/TezosChainlinkOracle/src/initialize.ts#L31)
-1. [Deploy the token contract](https://github.com/anonymoussprocket/CryptonomicExamples/blob/master/TezosChainlinkOracle/src/initialize.ts#L67)
-1. [Deploy the oracle contract](https://github.com/anonymoussprocket/CryptonomicExamples/blob/master/TezosChainlinkOracle/src/initialize.ts#L98)
-1. [Deploy the client contract](https://github.com/anonymoussprocket/CryptonomicExamples/blob/master/TezosChainlinkOracle/src/initialize.ts#L115)
-1. [Seed tokens](https://github.com/anonymoussprocket/CryptonomicExamples/blob/master/TezosChainlinkOracle/src/initialize.ts#L132)
+1. [Deploy the token contract](https://github.com/anonymoussprocket/CryptonomicExamples/blob/master/TezosChainlinkOracle/src/initialize.ts#L69)
+1. [Deploy the faucet contract](https://github.com/anonymoussprocket/CryptonomicExamples/blob/master/TezosChainlinkOracle/src/initialize.ts#L90)
+1. [Deploy the oracle contract](https://github.com/anonymoussprocket/CryptonomicExamples/blob/master/TezosChainlinkOracle/src/initialize.ts#L111)
+1. [Deploy the client contract](https://github.com/anonymoussprocket/CryptonomicExamples/blob/master/TezosChainlinkOracle/src/initialize.ts#L128)
+1. [Seed tokens](https://github.com/anonymoussprocket/CryptonomicExamples/blob/master/TezosChainlinkOracle/src/initialize.ts#L145)
 
-Running all of these steps may take a bit of time. After all, we're activating accounts and deploying multiple contracts. Each operation must complete before the next is attempted. Since this is all running on a testnet, we don't bother waiting for multiple confirmations. As mentioned previously, step two is skipped in the default configuration, to enable it, remove `tokenAddress` from `state.json`. **BAAAAD, need faucet** You will also need to change `seedTokens` to give it account credentials for an account with a token balance.
+Running all of these steps may take a bit of time. After all, we're activating accounts and deploying multiple contracts. Each operation must complete before the next is attempted. Since this is all running on a testnet, we don't bother waiting for multiple confirmations. As mentioned previously, step two is skipped in the default configuration, to enable it, remove `tokenAddress` from `state.json`. If you are deploying your own token you'll also need to deploy your own faucet contract and fund it. There is a shared token faucet already available if you're also using the shared token contract, you can see it here: [KT1JWENqDEoGasUty7m22QBPk6gfau8H4VQS](https://arronax.io/tezos/carthagenet/accounts/KT1JWENqDEoGasUty7m22QBPk6gfau8H4VQS).
 
 You can see sample deployments of the [oracle](https://better-call.dev/carthagenet/KT1HrsD4Zh3ztKF4hqpToVsqxvsRigsPQDVV/operations) and [client](https://better-call.dev/carthagenet/KT1MDitu7MUNtaZmfGvHr7MXzhtgTp6jnXuY/operations) contracts on carthagenet.
-
 
 ### Client
 
@@ -118,16 +118,21 @@ There is another important part of this contract that we didn't show a wrapper f
 
 The oracle wrapper handles the lifecycle of the oracle contract, it can query the contract storage to determine if there are requests to process and if so, process them. In this case the oracle wrapper will serve a random fortune from the list in state.json. To do this it will need access to request data, there is a more complex schema for this contract because it can manage multiple client requests at once. First we'll need to `getSimpleStorage` to identify where the request data is stored. In this case it's the `map` parameter of `OracleStorage`. There is also a `lookup` map, but that is used by the contract internally. Using the map index we can then query the big_map data for a specific key. This key is a monotonically increasing index, so we can just probe for that data using `checkForRequest`. In our example the oracle services only one kind of request, if we served multiple types of data, say fortunes and token price predictions, we would differentiate between the two with the `jobId` argument. This means the client needs to send the correct job id as well. There is also a way to provide additional parameters into this request using the associated map. As you can see request processing actually happens off-chain. Once the oracle compiles a response it will send it to the requesting client using the `fulfill_request` entry point. There are two parameters here, request id and the response data. Note the request id here is not the client request id, it's the oracle request id. Data for us is just a string. If you need to send complex data, you can encode it as binary. There are various options available. This data can be `PACK`ed if the response must be parsed by the receiving smart contract or it can be any other encoding if it will be processed off-chain.
 
-## References & support
+## References & Support
 
 This tutorial is meant to work out of the box. If this is not your experience please get in touch with us at Cryptonomic on the Riot (Element) [developer channel](https://matrix.to/#/!rUwpbdwWhWgKINPyOD:cryptonomic.tech?via=cryptonomic.tech&via=matrix.org&via=tzchat.org), or with the guys behind SmartPy in their [Telegram room](https://t.me/SmartPy_io).
 
 - [Smart Contract Development Syllabus](https://medium.com/the-cryptonomic-aperiodical/smart-contract-development-syllabus-f285a8463a4d) for Tezos.
+- [Blockchain Development with Tezos](https://medium.com/the-cryptonomic-aperiodical/blockchain-development-with-tezos-698aa930e50f) a starter guide for building on Tezos with ConseilJS.
 - [SmartPy Reference Manual](https://smartpy.io/dev/reference.html)
+- [Cryptonomic developer handbook](https://handbook.cryptonomic.tech/)
 - [ConseilJS documentation](https://cryptonomic.github.io/ConseilJS/#/)
 - [Nautilus Cloud](https://nautilus.cloud/) – turnkey Tezos infrastructure.
 - [JSONPath](http://jsonpath.com) and [jsonpath-plus](https://www.npmjs.com/package/jsonpath-plus) for parsing contract storage.
 - [Tezos Michelson reference](https://tezos.gitlab.io/whitedoc/michelson.html)
+- [Tezos StackExchange](https://tezos.stackexchange.com/questions)
+- [Tezos Development chat](https://t.me/TezosDevelopers) on Telegram.
+- [Tezos Developer Portal](https://developers.tezos.com/)
 
 ## Acknowledgments
 
