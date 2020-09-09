@@ -90,7 +90,7 @@ async function deployTokenContract(signer: Signer, keyStore: KeyStore, activate:
 async function deployFaucetContract(signer: Signer, keyStore: KeyStore, adminAddress: string, dropSize: number, tokenAddress: string) {
     console.log('~~ deployOracleContract');
     
-    const storage = TezosLanguageUtil.translateMichelsonToMicheline(`(pair (pair True "${adminAddress}") (pair ${dropSize} "${tokenAddress}"))`);
+    const storage = TezosLanguageUtil.translateMichelsonToMicheline(`(Pair (Pair True "${adminAddress}") (Pair ${dropSize} "${tokenAddress}"))`);
     const contract = fs.readFileSync('contracts/faucet.micheline').toString();
 
     const {gas, storageCost} = await TezosNodeWriter.testContractDeployOperation(tezosNode, 'main', keyStore, 0, undefined, 100_000, 10_000, 800_000, contract, storage);
