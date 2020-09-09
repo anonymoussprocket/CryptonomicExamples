@@ -80,16 +80,12 @@ async function deployTokenContract(signer: Signer, keyStore: KeyStore, activate:
     console.log(`Injected origination operation with ${groupid}`);
     const conseilResult = await TezosConseilClient.awaitOperationConfirmation(conseilServer, conseilServer.network, groupid, 7, networkBlockTime);
 
-    // mint
-
-    // fund accounts, oracleUserAlice, oracleUserRobert, oracleUserZach
-
     return conseilResult.originated_contracts;
 }
 
 async function deployFaucetContract(signer: Signer, keyStore: KeyStore, adminAddress: string, dropSize: number, tokenAddress: string) {
     console.log('~~ deployOracleContract');
-    
+
     const storage = TezosLanguageUtil.translateMichelsonToMicheline(`(Pair (Pair True "${adminAddress}") (Pair ${dropSize} "${tokenAddress}"))`);
     const contract = fs.readFileSync('contracts/faucet.micheline').toString();
 
@@ -143,7 +139,7 @@ async function deployFortuneSeekerContract(signer: Signer, keyStore: KeyStore, a
 }
 
 async function seedTokens(addresses: string[]) {
-    const keyStore = await KeyStoreUtils.restoreIdentityFromSecretKey(state.oracleUserZach.secretKey);
+    const keyStore = await KeyStoreUtils.restoreIdentityFromSecretKey(state.oracleUserAlice.secretKey);
     const signer = await SoftSigner.createSigner(TezosMessageUtils.writeKeyWithHint(keyStore.secretKey, 'edsk'));
 
     const params = `{${addresses.map(a => '"' + a + '"').join('; ')}}`;
@@ -202,7 +198,7 @@ async function run() {
     }
 
     if (!state.clientAddress) {
-        const clientKeyStore = await KeyStoreUtils.restoreIdentityFromSecretKey(state.oracleUserZach.secretKey);
+        const clientKeyStore = await KeyStoreUtils.restoreIdentityFromSecretKey(state.oracleAdmin.secretKey);
         const clientSigner = await SoftSigner.createSigner(TezosMessageUtils.writeKeyWithHint(clientKeyStore.secretKey, 'edsk'));
 
         const clientAddress = await deployFortuneSeekerContract(clientSigner, clientKeyStore, clientKeyStore.publicKeyHash, state.oracleAddress, state.tokenAddress);
