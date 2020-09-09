@@ -17,7 +17,7 @@ let tezosNode: string;
 let conseilServer: any;
 let networkBlockTime: number;
 
-const stateFile = 'sample-state.json';
+const stateFile = 'state.json';
 
 function clearRPCOperationGroupHash(hash: string) {
     return hash.replace(/\"/g, '').replace(/\n/, '');
