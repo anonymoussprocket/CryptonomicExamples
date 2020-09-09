@@ -1,0 +1,167 @@
+[
+  {
+    "prim": "storage",
+    "args": [
+      {
+        "prim": "pair",
+        "args": [
+          { "prim": "pair", "args": [ { "prim": "bool", "annots": [ "%active" ] }, { "prim": "address", "annots": [ "%admin" ] } ] },
+          { "prim": "pair", "args": [ { "prim": "nat", "annots": [ "%max_amount" ] }, { "prim": "address", "annots": [ "%token" ] } ] }
+        ]
+      }
+    ]
+  },
+  {
+    "prim": "parameter",
+    "args": [
+      {
+        "prim": "or",
+        "args": [
+          {
+            "prim": "pair",
+            "args": [
+              { "prim": "pair", "args": [ { "prim": "bool", "annots": [ "%active" ] }, { "prim": "address", "annots": [ "%admin" ] } ] },
+              { "prim": "pair", "args": [ { "prim": "nat", "annots": [ "%max_amount" ] }, { "prim": "address", "annots": [ "%token" ] } ] }
+            ],
+            "annots": [ "%configure" ]
+          },
+          { "prim": "set", "args": [ { "prim": "address" } ], "annots": [ "%request_tokens" ] }
+        ]
+      }
+    ]
+  },
+  {
+    "prim": "code",
+    "args": [
+      [
+        { "prim": "DUP" },
+        { "prim": "CDR" },
+        { "prim": "SWAP" },
+        { "prim": "CAR" },
+        {
+          "prim": "IF_LEFT",
+          "args": [
+            [
+              { "prim": "SENDER" },
+              { "prim": "DIG", "args": [ { "int": "2" } ] },
+              { "prim": "DUP" },
+              { "prim": "DUG", "args": [ { "int": "3" } ] },
+              { "prim": "CAR" },
+              { "prim": "CDR" },
+              { "prim": "COMPARE" },
+              { "prim": "EQ" },
+              {
+                "prim": "IF",
+                "args": [
+                  [ { "prim": "SWAP" }, { "prim": "DROP" } ],
+                  [ { "prim": "PUSH", "args": [ { "prim": "string" }, { "string": "Privileged operation" } ] }, { "prim": "FAILWITH" } ]
+                ]
+              },
+              { "prim": "NIL", "args": [ { "prim": "operation" } ] }
+            ],
+            [
+              { "prim": "NIL", "args": [ { "prim": "operation" } ] },
+              { "prim": "DUP" },
+              { "prim": "DIG", "args": [ { "int": "3" } ] },
+              { "prim": "DUP" },
+              { "prim": "DUG", "args": [ { "int": "4" } ] },
+              { "prim": "CDR" },
+              { "prim": "CDR" },
+              {
+                "prim": "CONTRACT",
+                "args": [
+                  {
+                    "prim": "list",
+                    "args": [
+                      {
+                        "prim": "pair",
+                        "args": [
+                          { "prim": "address", "annots": [ "%from_" ] },
+                          {
+                            "prim": "list",
+                            "args": [
+                              {
+                                "prim": "pair",
+                                "args": [
+                                  { "prim": "address", "annots": [ "%to_" ] },
+                                  { "prim": "pair", "args": [ { "prim": "nat", "annots": [ "%token_id" ] }, { "prim": "nat", "annots": [ "%amount" ] } ] }
+                                ]
+                              }
+                            ],
+                            "annots": [ "%txs" ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "annots": [ "%transfer" ]
+              },
+              { "prim": "IF_NONE", "args": [ [ { "prim": "PUSH", "args": [ { "prim": "string" }, { "string": "Incompatible token interface" } ] }, { "prim": "FAILWITH" } ], [] ] },
+              { "prim": "PUSH", "args": [ { "prim": "mutez" }, { "int": "0" } ] },
+              {
+                "prim": "NIL",
+                "args": [
+                  {
+                    "prim": "pair",
+                    "args": [
+                      { "prim": "address", "annots": [ "%from_" ] },
+                      {
+                        "prim": "list",
+                        "args": [
+                          {
+                            "prim": "pair",
+                            "args": [
+                              { "prim": "address", "annots": [ "%to_" ] },
+                              { "prim": "pair", "args": [ { "prim": "nat", "annots": [ "%token_id" ] }, { "prim": "nat", "annots": [ "%amount" ] } ] }
+                            ]
+                          }
+                        ],
+                        "annots": [ "%txs" ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              { "prim": "NIL", "args": [ { "prim": "address" } ] },
+              { "prim": "DIG", "args": [ { "int": "6" } ] },
+              { "prim": "DUP" },
+              { "prim": "DUG", "args": [ { "int": "7" } ] },
+              { "prim": "ITER", "args": [ [ { "prim": "CONS" } ] ] },
+              { "prim": "NIL", "args": [ { "prim": "address" } ] },
+              { "prim": "SWAP" },
+              { "prim": "ITER", "args": [ [ { "prim": "CONS" } ] ] },
+              {
+                "prim": "MAP",
+                "args": [
+                  [
+                    { "prim": "DIG", "args": [ { "int": "7" } ] },
+                    { "prim": "DUP" },
+                    { "prim": "DUG", "args": [ { "int": "8" } ] },
+                    { "prim": "CDR" },
+                    { "prim": "CAR" },
+                    { "prim": "PUSH", "args": [ { "prim": "nat" }, { "int": "0" } ] },
+                    { "prim": "PAIR", "annots": [ "%token_id", "%amount" ] },
+                    { "prim": "SWAP" },
+                    { "prim": "PAIR", "annots": [ "%to_" ] }
+                  ]
+                ]
+              },
+              { "prim": "DIG", "args": [ { "int": "5" } ] },
+              { "prim": "DROP" },
+              { "prim": "DIG", "args": [ { "int": "5" } ] },
+              { "prim": "DROP" },
+              { "prim": "SELF" },
+              { "prim": "ADDRESS" },
+              { "prim": "PAIR", "annots": [ "%from_", "%txs" ] },
+              { "prim": "CONS" },
+              { "prim": "TRANSFER_TOKENS" },
+              { "prim": "CONS" }
+            ]
+          ]
+        },
+        { "prim": "PAIR" }
+      ]
+    ]
+  }
+]

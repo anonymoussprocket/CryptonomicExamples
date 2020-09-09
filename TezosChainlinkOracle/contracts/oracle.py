@@ -17,6 +17,8 @@ def value_bytes(s):
 def value_int(s):
     return sp.variant("int", s)
 
+wLINK_decimals = 1000000000000000000
+
 # Request parameters
 parameters_type = sp.TMap(sp.TString, value_type)
 
@@ -204,27 +206,30 @@ class TokenFaucet(sp.Contract):
                  admin,
                  token_contract,
                  token_address  = None,
-                 max_amount     = 10):
+                 max_amount     = 10 * wLINK_decimals):
         self.token_contract = token_contract
+
         if token_address is None:
             token_address = token_contract.address
+
         self.init(admin               = admin,
                   active              = True,
                   max_amount          = max_amount,
                   token               = token_address)
 
     @sp.entry_point
-    def request_tokens(self):
-        # TODO: check token balance for sender
-        # TODO: if current token balance - self.data.max_amount > 0, send
-
-        token = sp.contract(self.token_contract.batch_transfer.get_type(), self.data.token, entry_point = "transfer").open_some(message = "Incompatible token interface")
-        sp.transfer([sp.record(from_ = sp.to_address(sp.self), txs = [sp.record(to_ = sp.sender, token_id = 0, amount = self.data.max_amount)])], sp.tez(0), token)
+    def request_tokens(self, targets):
+        sp.set_type(targets, sp.TSet(sp.TAddress))
+        token = sp.contract(self.token_contract.batch_transfer.get_type(),
+                            self.data.token,
+                            entry_point = "transfer").open_some(message = "Incompatible token interface")
+        targets = targets.elements().map(lambda target: sp.record(to_ = target, token_id = 0, amount = self.data.max_amount))
+        sp.transfer([sp.record(from_ = sp.to_address(sp.self), txs = targets)], sp.tez(0), token)
 
     @sp.entry_point
     def configure(self, params):
         sp.verify(self.data.admin == sp.sender, message = "Privileged operation")
-        pass
+        self.data.set(params)
 
 # This code was used to originate test contracts and is kept as an example
 if False:
@@ -237,9 +242,10 @@ if False:
         scenario += link_token
         link_token_address = sp.address('KT1TQR3eyYCytqBK9EB28J1taa2cX41F9R8x')
 
-        token_faucet = TokenFaucet(link_admin_address, link_token, link_token_address, 10)
+        token_faucet = TokenFaucet(link_admin_address, link_token, link_token_address, 10 * wLINK_decimals)
         scenario += token_faucet
-        #token_faucet_address = sp.address('KT1TQR3eyYCytqBK9EB28J1taa2cX41F9R8x')
+        token_faucet_address = sp.address('KT1JWENqDEoGasUty7m22QBPk6gfau8H4VQS')
+
 
         oracle1_admin_address = sp.address('tz1fextP23D6Ph2zeGTP8EwkP5Y8TufeFCHA')
         oracle1 = Oracle(oracle1_admin_address, link_token, token_address = link_token_address)
