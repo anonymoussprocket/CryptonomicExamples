@@ -23,6 +23,10 @@ function clearRPCOperationGroupHash(hash: string) {
     return hash.replace(/\"/g, '').replace(/\n/, '');
 }
 
+function sortAddresses(addresses: string[]) {
+    return addresses.filter(a => a.startsWith('tz')).sort().concat(addresses.filter(a => a.startsWith('KT1')).sort());
+}
+
 function init() {
     state = JSON.parse(fs.readFileSync(stateFile).toString());
     tezosNode = state.config.tezosNode;
@@ -142,7 +146,7 @@ async function seedTokens(addresses: string[]) {
     const keyStore = await KeyStoreUtils.restoreIdentityFromSecretKey(state.oracleUserAlice.secretKey);
     const signer = await SoftSigner.createSigner(TezosMessageUtils.writeKeyWithHint(keyStore.secretKey, 'edsk'));
 
-    const params = `{${addresses.map(a => '"' + a + '"').join('; ')}}`;
+    const params = `{${sortAddresses(addresses).map(a => '"' + a + '"').join('; ')}}`;
 
     const nodeResult = await TezosNodeWriter.sendContractInvocationOperation(tezosNode, signer, keyStore, state.faucetAddress, 0, 500_000, 100 * addresses.length, Math.max(300_000, 200_000 * addresses.length), 'request_tokens', params, TezosParameterFormat.Michelson);
     const groupid = clearRPCOperationGroupHash(nodeResult.operationGroupID);
@@ -208,11 +212,7 @@ async function run() {
 
     if (changed) { fs.writeFileSync(stateFile, JSON.stringify(state, null, 4)); }
 
-    const addresses = [state.oracleAddress, state.clientAddress, state.oracleAdmin.pkh, state.oracleUserAlice.pkh];
-    await seedTokens([addresses[0]]);
-    await seedTokens([addresses[1]]); // TODO
-    await seedTokens([addresses[2]]);
-    await seedTokens([addresses[3]]);
+    await seedTokens([state.oracleAdmin.pkh, state.oracleUserAlice.pkh, state.oracleAddress, state.clientAddress]);
 }
 
 run();
