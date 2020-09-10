@@ -246,7 +246,6 @@ if False:
         scenario += token_faucet
         token_faucet_address = sp.address('KT1JWENqDEoGasUty7m22QBPk6gfau8H4VQS')
 
-
         oracle1_admin_address = sp.address('tz1fextP23D6Ph2zeGTP8EwkP5Y8TufeFCHA')
         oracle1 = Oracle(oracle1_admin_address, link_token, token_address = link_token_address)
         scenario += oracle1
@@ -301,10 +300,8 @@ if "templates" not in __name__:
         scenario.h2("Tokens")
         scenario += link_token.transfer([sp.record(from_ = admin.address, txs = [sp.record(to_ = faucet.address, token_id = 0, amount = 100)])]).run(sender = admin)
         scenario += link_token.transfer([sp.record(from_ = admin.address, txs = [sp.record(to_ = oracle1.address, token_id = 0, amount = 1)])]).run(sender = admin)
-        scenario += faucet.request_tokens().run(sender = client1_admin)
-        scenario += link_token.transfer([sp.record(from_ = client1_admin.address, txs = [sp.record(to_ = client1.address, token_id = 0, amount = 10)])]).run(sender = client1_admin)
-        scenario += faucet.request_tokens().run(sender = client2_admin)
-        scenario += link_token.transfer([sp.record(from_ = client2_admin.address, txs = [sp.record(to_ = client2.address, token_id = 0, amount = 10)])]).run(sender = client2_admin)
+        scenario += faucet.request_tokens(sp.set([client1.address, client2.address]))
+        #scenario += link_token.transfer([sp.record(from_ = client1_admin.address, txs = [sp.record(to_ = client1.address, token_id = 0, amount = 10)])]).run(sender = client1_admin)
 
         scenario.h2("Client1 sends a request that gets fulfilled")
         scenario.h3("A request")
