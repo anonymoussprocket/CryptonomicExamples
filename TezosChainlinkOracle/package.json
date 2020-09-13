@@ -21,7 +21,7 @@
         "conseiljs-softsigner": "5.0.3",
         "jsonpath-plus": "4.0.0",
         "loglevel": "1.6.8",
-        "node-fetch": "2.6.0"
+        "node-fetch": "2.6.1"
     },
     "devDependencies": {
         "typescript": "3.8.3"
