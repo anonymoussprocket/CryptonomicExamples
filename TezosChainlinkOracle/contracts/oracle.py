@@ -174,7 +174,7 @@ class Client(sp.Contract, Client_requester, Client_receiver):
 
     @sp.entry_point
     def request_fortune(self, params):
-        self.request_helper(params.payment, self.data.fortune_job_id, {}, self.data.oracle, self.data.waiting_fortune_id, sp.self_entry_point("receive_fortune"), params.timeout)
+        self.request_helper(params.payment, self.data.fortune_job_id, params.parameters, self.data.oracle, self.data.waiting_fortune_id, sp.self_entry_point("receive_fortune"), params.timeout)
 
     @sp.entry_point
     def cancel_fortune(self):
@@ -305,7 +305,7 @@ if "templates" not in __name__:
 
         scenario.h2("Client1 sends a request that gets fulfilled")
         scenario.h3("A request")
-        scenario += client1.request_fortune(payment = 1, timeout = 10)
+        scenario += client1.request_fortune(payment = 1, timeout = 10, parameters = {})
 
         scenario.h3("Ledger")
         scenario.show(link_token.data.ledger)
@@ -316,7 +316,7 @@ if "templates" not in __name__:
 
         scenario.h2("Client1 sends a request that gets cancelled")
         scenario.h3("A request")
-        scenario += client1.request_fortune(payment = 1, timeout = 10)
+        scenario += client1.request_fortune(payment = 1, timeout = 10, parameters = {})
 
         scenario.h3("Ledger")
         scenario.show(link_token.data.ledger)
@@ -327,11 +327,11 @@ if "templates" not in __name__:
 
         scenario.h2("Client2 sends a request that gets fulfilled")
         scenario.h3("A request")
-        scenario += client2.request_fortune(payment = 1, timeout = 10)
+        scenario += client2.request_fortune(payment = 1, timeout = 10, parameters = {"a": sp.variant("string", "b"), "c": sp.variant("int", 1)})
 
         scenario.h3("Ledger")
         scenario.show(link_token.data.ledger)
 
         scenario.h3("Oracle consumes the request")
-        scenario.verify_equal(oracle.data.requests[2].parameters, {})
+        #scenario.verify_equal(oracle.data.requests[2].parameters, {})
         scenario += oracle.fulfill_request(request_id = 2, result = value_string('All your hard work will soon pay off')).run(sender = oracle1)
