@@ -17,6 +17,6 @@
         "conseiljs": "5.0.0-alpha.1",
         "express": "4.17.1",
         "loglevel": "1.6.8",
-        "node-fetch": "2.6.0"
+        "node-fetch": "2.6.1"
     }
 }
