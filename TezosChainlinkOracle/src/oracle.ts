@@ -50,6 +50,24 @@ function clearRPCOperationGroupHash(hash: string) {
     return hash.replace(/\"/g, '').replace(/\n/, '');
 }
 
+function parseMap(mapData: any) {
+    const keys = JSONPath({ path: '$..args[?(@parent.prim === "Elt")].string', json: mapData });
+    const values = JSONPath({ path: '$..args[1]..args[?(@.string>""||@.bytes>""||@.int>"")]', json: mapData });
+
+    let map: any = {};
+    keys.forEach((k, i) => {
+        if (values[i].int !== undefined) {
+            map[k] = Number(values[i].int);
+        } else if (values[i].bytes !== undefined) {
+            map[k] = `0x${values[i].bytes}`;
+        } else {
+            map[k] = values[i].string;
+        }
+    });
+
+    return map;
+}
+
 function init() {
     state = JSON.parse(fs.readFileSync('state.json').toString());
     tezosNode = state.config.tezosNode;
@@ -88,7 +106,7 @@ async function checkForRequest(signer: Signer, keyStore: KeyStore, ) {
             client: JSONPath({ path: '$.args[0].args[1].args[0].string', json: mapResult })[0],
             requestId: Number(JSONPath({ path: '$.args[0].args[1].args[1].int', json: mapResult })[0]),
             jobId: JSONPath({ path: '$.args[1].args[0].args[0].bytes', json: mapResult })[0],
-            params: {}, // $.args[1].args[0].args[1]
+            params: parseMap(JSONPath({ path: '$.args[1].args[0].args[1]', json: mapResult })[0]),
             target: JSONPath({ path: '$.args[1].args[1].args[0].string', json: mapResult })[0],
             timestamp: new Date(JSONPath({ path: '$.args[1].args[1].args[1].string', json: mapResult })[0]),
             oracleRequestId: currentRequestId
@@ -109,6 +127,22 @@ async function processRequest(signer: Signer, keyStore: KeyStore, request: Oracl
     const fee = 300_000;
     const gasLimit = 500_000;
     const storageFee = 3_000;
+
+    const expectedProcessingTime = 1000;
+    if (request.timestamp.getTime() < (Date.now() - expectedProcessingTime)) {
+        console.log(`skipping request ${request.oracleRequestId}/${request.requestId}, TTL below threshold`);
+        return;
+    }
+
+    if (request.jobId !== '0001') {
+        console.log(`skipping request ${request.oracleRequestId}/${request.requestId}, unsupported job id (${request.jobId})`);
+        return;
+    }
+
+    if (request.amount < 1) {
+        console.log(`skipping request ${request.oracleRequestId}/${request.requestId}, payment too low`);
+        return;
+    }
 
     const fortune = state.oracleData[Math.floor(Math.random() * state.oracleData.length - 1)];
     const nodeResult = await TezosNodeWriter.sendContractInvocationOperation(tezosNode, signer, keyStore, state.oracleAddress, 0, fee, storageFee, gasLimit, 'fulfill_request', `(Pair ${request.oracleRequestId} (Right (Right "${fortune}")))`, TezosParameterFormat.Michelson);

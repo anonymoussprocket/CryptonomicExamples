@@ -77,12 +77,28 @@ async function switchOracle() {
     // TODO
 }
 
-async function requestFortune(signer: Signer, keyStore: KeyStore, payment: number, timeout: number = 5) {
+async function requestFortune(signer: Signer, keyStore: KeyStore, payment: number, timeout: number = 5, map?: any) {
+    let elt: string[] = [];
+    if (map !== undefined) {
+        Object.keys(map).forEach(key => {
+            let val: string | number;
+            if (Number.isInteger(map[key])) {
+                val = `(Right (Left ${Number(map[key])}))`;
+            } else if (map[key].startsWith('0x')) {
+                val = `(Left ${map[key]})`;
+            } else {
+                val = `(Right (Right "${map[key]}"))`;
+            }
+
+            elt.push(`Elt "${key}" ${val}`);
+        });
+    }
+
     const fee = 300_000;
     const gasLimit = 500_000;
     const storageFee = 3_000;
 
-    const nodeResult = await TezosNodeWriter.sendContractInvocationOperation(tezosNode, signer, keyStore, clientAddress, 0, fee, storageFee, gasLimit, 'request_fortune', `(Pair ${payment} ${timeout})`, TezosParameterFormat.Michelson);
+    const nodeResult = await TezosNodeWriter.sendContractInvocationOperation(tezosNode, signer, keyStore, clientAddress, 0, fee, storageFee, gasLimit, 'request_fortune', `(Pair { ${elt.join('; ')} } (Pair ${payment} ${timeout}))`, TezosParameterFormat.Michelson);
     //const nodeResult = await TezosNodeWriter.sendContractInvocationOperation(tezosNode, signer, keyStore, clientAddress, 0, fee, storageFee, gasLimit, '', `(Right (Right Unit))`, TezosParameterFormat.Michelson);
     const groupid = clearRPCOperationGroupHash(nodeResult.operationGroupID);
 
@@ -133,7 +149,7 @@ async function run() {
 
     //monitor = setInterval(async () => { await checkFortune() }, networkBlockTime * 1000 * 5);
 
-    await requestFortune(userSigner, userKeyStore, oracleFee);
+    await requestFortune(userSigner, userKeyStore, oracleFee, 5, {a: 'b', c: 1, d: '0xc0ff33'});
     //await cancelFortune(userSigner, userKeyStore,1);
 }
 
