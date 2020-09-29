@@ -149,5 +149,5 @@ git clone https://github.com/anonymoussprocket/CryptonomicExamples.git ./TezosEx
 cd TezosExamples/TezosChainlinkOracle
 # follow instructions in the Configuration section
 npm i
-npm run initialize
+npm run deploy
 ```
